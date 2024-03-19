@@ -1,13 +1,22 @@
-const express= require('express')
+const express = require("express");
+const ErrorHandler = require("./utils/ErrorHandler");
+const app = express();
+const bodyParser = require("body-parser");
+const cookieParser = require("cookie-parser");
+const fileUpload = require("express-fileupload");
 
+app.use(express.json());
+app.use(cookieParser);
+app.use(bodyParser.urlencoded({extended:true}));
+app.use(fileUpload({ useTempFiles: true }));
 
-
-
-const app=express()
 // config
 if (process.env.NODE_ENV !== "PRODUCTION") {
-    require("dotenv").config({
-      path: "config/.env",
-    });
-  }
-module.exports= app;
+  require("dotenv").config({
+    path: "config/.env",
+  });
+}
+
+// its for Error Handler
+app.use(ErrorHandler);
+module.exports = app;
