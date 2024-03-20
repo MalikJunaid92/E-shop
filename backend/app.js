@@ -4,9 +4,11 @@ const app = express();
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const user = require("./controller/user");
+const cors = require("cors");
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(cors());
 app.use("/", express.static("uploads"));
 app.use(bodyParser.urlencoded({ extended: true }));
 
