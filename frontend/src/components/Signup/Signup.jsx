@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import styles from "../../styles/styles";
-import { Link } from "react-router-dom";
+import { Link ,useNavigate} from "react-router-dom";
 import { RxAvatar } from "react-icons/rx";
 import axios from "axios";
 import { server } from "../../server";
@@ -11,6 +11,8 @@ function SignUp() {
   const [password, setPassword] = useState("");
   const [visible, setVisible] = useState(false);
   const [avatar, setAvatar] = useState("");
+  const navigate = useNavigate(); // Initialize useNavigate hook
+
   const handleFileInputChange = (e) => {
     const file = e.target.files[0];
     setAvatar(file);
@@ -21,17 +23,20 @@ function SignUp() {
     const newForm = new FormData();
     newForm.append("file", avatar);
     newForm.append("name", name);
-    newForm.append("file", email);
+    newForm.append("email", email);
     newForm.append("password", password);
     axios
       .post(`${server}/user/create-user`, newForm, config)
       .then((res) => {
-        console.log(res);
+        if (res.data.success === true) {
+          navigate("/");
+        }
       })
       .catch((err) => {
         console.log(err);
       });
   };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
