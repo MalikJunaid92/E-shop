@@ -5,6 +5,8 @@ import { Link } from "react-router-dom";
 import { RxAvatar } from "react-icons/rx";
 import axios from "axios";
 import { server } from "../../server";
+import { toast } from "react-toastify";
+
 function SignUp() {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -29,8 +31,9 @@ function SignUp() {
       .then((res) => {
         alert(res.message)
       })
-      .catch((err) => {
-        return err;
+      .catch((error) => {
+        console.log(error)
+        toast.error("error!")
       });
   };
 
