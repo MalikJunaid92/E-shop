@@ -21,11 +21,10 @@ router.post("/create-user", upload.single("file"), async (req, res, next) => {
 
       fs.unlink(filePath, (err) => {
         if (err) {
-          console.error(err);
+          console.log(err);
           res.status(500).json({ message: "Error deleting file", error: err });
           return;
         }
-        res.json({ message: "File has been deleted." });
       });
 
       return next(new ErrorHandler("User already exists", 400));
@@ -64,13 +63,15 @@ router.post("/create-user", upload.single("file"), async (req, res, next) => {
 // create activationToken
 const createActivationToken = (user) => {
   return jwt.sign(user, process.env.Activation_SECRET, {
-    expiresIn: "5m",
+    expiresIn: "1d",
   });
 };
 // activate user
-router.get("/activation",catchAsyncErrors(async(req,res,next)=>{
+// user.js
+
+router.get("/activation", catchAsyncErrors(async (req, res, next) => {
   try {
-    const { activation_token } = req.body;
+    const { activation_token } = req.query; // Retrieve activation token from query parameter
 
     const newUser = jwt.verify(
       activation_token,
@@ -80,6 +81,7 @@ router.get("/activation",catchAsyncErrors(async(req,res,next)=>{
     if (!newUser) {
       return next(new ErrorHandler("Invalid token", 400));
     }
+
     const { name, email, password, avatar } = newUser;
 
     let user = await User.findOne({ email });
@@ -87,6 +89,7 @@ router.get("/activation",catchAsyncErrors(async(req,res,next)=>{
     if (user) {
       return next(new ErrorHandler("User already exists", 400));
     }
+
     user = await User.create({
       name,
       email,
@@ -99,4 +102,5 @@ router.get("/activation",catchAsyncErrors(async(req,res,next)=>{
     return next(new ErrorHandler(error.message, 500));
   }
 }))
+
 module.exports = router;
