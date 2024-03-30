@@ -4,10 +4,12 @@ const { upload } = require("../multer");
 const User = require("../model/user");
 const ErrorHandler = require("../utils/ErrorHandler");
 const fs = require("fs");
+const bcrypt = require('bcrypt');
 const jwt = require("jsonwebtoken");
 const sendMail = require("../utils/sendMail");
 const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 const sendToken = require("../utils/jwtToken");
+const { isAuthenticated } = require("../middleware/auth");
 
 router.post("/create-user", upload.single("file"), async (req, res, next) => {
   try {
@@ -69,38 +71,92 @@ const createActivationToken = (user) => {
 // activate user
 // user.js
 
-router.get("/activation", catchAsyncErrors(async (req, res, next) => {
-  try {
-    const { activation_token } = req.query; // Retrieve activation token from query parameter
+router.get(
+  "/activation",
+  catchAsyncErrors(async (req, res, next) => {
+    try {
+      const { activation_token } = req.query; // Retrieve activation token from query parameter
 
-    const newUser = jwt.verify(
-      activation_token,
-      process.env.ACTIVATION_SECRET
-    );
+      const newUser = jwt.verify(
+        activation_token,
+        process.env.ACTIVATION_SECRET
+      );
 
-    if (!newUser) {
-      return next(new ErrorHandler("Invalid token", 400));
+      if (!newUser) {
+        return next(new ErrorHandler("Invalid token", 400));
+      }
+
+      const { name, email, password, avatar } = newUser;
+
+      let user = await User.findOne({ email });
+
+      if (user) {
+        return next(new ErrorHandler("User already exists", 400));
+      }
+
+      user = await User.create({
+        name,
+        email,
+        avatar,
+        password,
+      });
+
+      sendToken(user, 201, res);
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 500));
     }
+  })
+);
+// login user
+router.post(
+  "/login-user",
+  catchAsyncErrors(async (req, res, next) => {
+    try {
+      const { email, password } = req.body;
 
-    const { name, email, password, avatar } = newUser;
+      if (!email || !password) {
+        return next(new ErrorHandler("Please provide the all fields!", 400));
+      }
 
-    let user = await User.findOne({ email });
+      const user = await User.findOne({ email }).select("+password");
 
-    if (user) {
-      return next(new ErrorHandler("User already exists", 400));
+      if (!user) {
+        return next(new ErrorHandler("User doesn't exists!", 400));
+      }
+
+      const isPasswordValid = await user.comparePassword(password);
+
+      if (!isPasswordValid) {
+        return next(
+          new ErrorHandler("Please provide the correct information", 400)
+        );
+      }
+
+      sendToken(user, 201, res);
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 500));
     }
+  })
+);
+// load user
+router.get(
+  "/getuser",
+  isAuthenticated,
+  catchAsyncErrors(async (req, res, next) => {
+    try {
+      const user = await User.findById(req.user.id);
 
-    user = await User.create({
-      name,
-      email,
-      avatar,
-      password,
-    });
+      if (!user) {
+        return next(new ErrorHandler("User doesn't exists", 400));
+      }
 
-    sendToken(user, 201, res);
-  } catch (error) {
-    return next(new ErrorHandler(error.message, 500));
-  }
-}))
-
+      res.status(200).json({
+        success: true,
+        user,
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  })
+);
 module.exports = router;
