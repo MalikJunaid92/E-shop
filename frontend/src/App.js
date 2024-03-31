@@ -7,16 +7,12 @@ import { Login, SignupPage, ActivationPage } from "./Routes";
 import axios from "axios";
 import { server } from "./server";
 import { toast } from "react-toastify";
+import Store from "./redux/store";
+import { loadUser } from "./redux/actions/user";
 
 function App() {
   useEffect(() => {
-    axios
-      .get(`${server}/user/getuser`, { withCredentials: true })
-      .then((res) => {
-        toast.success(res.data.message);
-      }).catch((err)=>{
-        toast.error(err.response.data.message)
-      })
+    Store.dispatch(loadUser());
   }, []);
   return (
     <BrowserRouter>
