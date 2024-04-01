@@ -3,10 +3,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./App.css";
-import { Login, SignupPage, ActivationPage } from "./Routes";
-import axios from "axios";
-import { server } from "./server";
-import { toast } from "react-toastify";
+import { Login, SignupPage, ActivationPage,HomePage } from "./Routes";
+
 import Store from "./redux/store";
 import { loadUser } from "./redux/actions/user";
 
@@ -17,6 +15,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/sign-up" element={<SignupPage />} />
         <Route
