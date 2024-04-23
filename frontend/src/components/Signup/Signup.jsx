@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { React, useState } from "react";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import styles from "../../styles/styles";
 import { Link } from "react-router-dom";
@@ -7,36 +7,39 @@ import axios from "axios";
 import { server } from "../../server";
 import { toast } from "react-toastify";
 
-function SignUp() {
+const Singup = () => {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [visible, setVisible] = useState(false);
-  const [avatar, setAvatar] = useState("");
+  const [avatar, setAvatar] = useState(null);
 
   const handleFileInputChange = (e) => {
-    const file = e.target.files[0];
-    setAvatar(file);
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (reader.readyState === 2) {
+        setAvatar(reader.result);
+      }
+    };
+
+    reader.readAsDataURL(e.target.files[0]);
   };
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const config = { headers: { "Content-Type": "multipart/form-data" } };
-    const newForm = new FormData();
-    newForm.append("file", avatar);
-    newForm.append("name", name);
-    newForm.append("email", email);
-    newForm.append("password", password);
+
     axios
-      .post(`${server}/user/create-user`, newForm, config)
+      .post(`${server}/user/create-user`, { name, email, password, avatar })
       .then((res) => {
         toast.success(res.data.message);
-      })
-      .catch((error) => {
-        toast.error(error.response.data.message);
         setName("");
         setEmail("");
         setPassword("");
-        setAvatar("");
+        setAvatar();
+      })
+      .catch((error) => {
+        toast.error(error.response.data.message);
       });
   };
 
@@ -69,6 +72,7 @@ function SignUp() {
                 />
               </div>
             </div>
+
             <div>
               <label
                 htmlFor="email"
@@ -88,6 +92,7 @@ function SignUp() {
                 />
               </div>
             </div>
+
             <div>
               <label
                 htmlFor="password"
@@ -120,16 +125,7 @@ function SignUp() {
                 )}
               </div>
             </div>
-            <div className={`${styles.noramlFlex} justify-between`}>
-              <div className="text-sm">
-                <a
-                  href=".forgot-password"
-                  className="font-medium text-blue-600 hover:text-blue-500"
-                >
-                  Forgot your password?
-                </a>
-              </div>
-            </div>
+
             <div>
               <label
                 htmlFor="avatar"
@@ -139,7 +135,7 @@ function SignUp() {
                 <span className="inline-block h-8 w-8 rounded-full overflow-hidden">
                   {avatar ? (
                     <img
-                      src={URL.createObjectURL(avatar)}
+                      src={avatar}
                       alt="avatar"
                       className="h-full w-full object-cover rounded-full"
                     />
@@ -149,7 +145,7 @@ function SignUp() {
                 </span>
                 <label
                   htmlFor="file-input"
-                  className="ml-5 flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-700"
+                  className="ml-5 flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                 >
                   <span>Upload a file</span>
                   <input
@@ -163,6 +159,7 @@ function SignUp() {
                 </label>
               </div>
             </div>
+
             <div>
               <button
                 type="submit"
@@ -182,6 +179,6 @@ function SignUp() {
       </div>
     </div>
   );
-}
+};
 
-export default SignUp;
+export default Singup;

@@ -1,9 +1,7 @@
-// ActivationPage.jsx
-
-import React, { useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { useState } from "react";
 import axios from "axios";
+import React, { useEffect } from "react";
+import { useState } from "react";
+import { useParams } from "react-router-dom";
 import { server } from "../server";
 
 const ActivationPage = () => {
@@ -12,20 +10,21 @@ const ActivationPage = () => {
 
   useEffect(() => {
     if (activation_token) {
-      const activationEmail = async () => {
-        try {
-          const res = await axios.get(`${server}/user/activation`, {
-            params: { activation_token }, // Send activation token as a query parameter
+      const sendRequest = async () => {
+        await axios
+          .post(`${server}/user/activation`, {
+            activation_token,
+          })
+          .then((res) => {
+            console.log(res);
+          })
+          .catch((err) => {
+            setError(true);
           });
-          console.log(res.data.message);
-        } catch (error) {
-          console.log(error.response.data.message);
-          setError(true);
-        }
       };
-      activationEmail();
+      sendRequest();
     }
-  }, [activation_token]);
+  }, []);
 
   return (
     <div
@@ -40,7 +39,7 @@ const ActivationPage = () => {
       {error ? (
         <p>Your token is expired!</p>
       ) : (
-        <p>Your account has been created successfully!</p>
+        <p>Your account has been created suceessfully!</p>
       )}
     </div>
   );
