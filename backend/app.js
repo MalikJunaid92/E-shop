@@ -4,6 +4,8 @@ const app = express();
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const user = require("./controller/user");
+const shop = require("./controller/shop");
+const product = require("./controller/product");
 const cors = require("cors");
 
 app.use(express.json());
@@ -26,6 +28,9 @@ if (process.env.NODE_ENV !== "PRODUCTION") {
 // import routes
 
 app.use("/api/v2/user", user);
+app.use("/api/v2/shop", shop);
+app.use("/api/v2/product", product);
+
 
 // its for Error Handler
 app.use(ErrorHandler);
