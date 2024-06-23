@@ -14,7 +14,6 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     await axios
       .post(
         `${server}/user/login-user`,

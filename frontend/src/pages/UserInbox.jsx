@@ -1,16 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
 import Header from "../components/Layout/Header";
 import { useSelector } from "react-redux";
-import socketIO from "socket.io-client";
-import { format } from "timeago.js";
+// import socketIO from "socket.io-client";
+// import { format } from "timeago.js";
 import { server } from "../server";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { AiOutlineArrowRight, AiOutlineSend } from "react-icons/ai";
 import { TfiGallery } from "react-icons/tfi";
 import styles from "../styles/styles";
-const ENDPOINT = "https://socket-ecommerce-tu68.onrender.com/";
-const socketId = socketIO(ENDPOINT, { transports: ["websocket"] });
+// const ENDPOINT = "https://socket-ecommerce-tu68.onrender.com/";
+// const socketId = socketIO(ENDPOINT, { transports: ["websocket"] });
 
 const UserInbox = () => {
   const { user,loading } = useSelector((state) => state.user);
@@ -26,15 +26,15 @@ const UserInbox = () => {
   const [open, setOpen] = useState(false);
   const scrollRef = useRef(null);
 
-  useEffect(() => {
-    socketId.on("getMessage", (data) => {
-      setArrivalMessage({
-        sender: data.senderId,
-        text: data.text,
-        createdAt: Date.now(),
-      });
-    });
-  }, []);
+  // useEffect(() => {
+  //   socketId.on("getMessage", (data) => {
+  //     setArrivalMessage({
+  //       sender: data.senderId,
+  //       text: data.text,
+  //       createdAt: Date.now(),
+  //     });
+  //   });
+  // }, []);
 
   useEffect(() => {
     arrivalMessage &&
@@ -60,15 +60,15 @@ const UserInbox = () => {
     getConversation();
   }, [user, messages]);
 
-  useEffect(() => {
-    if (user) {
-      const sellerId = user?._id;
-      socketId.emit("addUser", sellerId);
-      socketId.on("getUsers", (data) => {
-        setOnlineUsers(data);
-      });
-    }
-  }, [user]);
+  // useEffect(() => {
+  //   if (user) {
+  //     const sellerId = user?._id;
+  //     socketId.emit("addUser", sellerId);
+  //     socketId.on("getUsers", (data) => {
+  //       setOnlineUsers(data);
+  //     });
+  //   }
+  // }, [user]);
 
   const onlineCheck = (chat) => {
     const chatMembers = chat.members.find((member) => member !== user?._id);
@@ -105,11 +105,11 @@ const UserInbox = () => {
       (member) => member !== user?._id
     );
 
-    socketId.emit("sendMessage", {
-      senderId: user?._id,
-      receiverId,
-      text: newMessage,
-    });
+    // socketId.emit("sendMessage", {
+    //   senderId: user?._id,
+    //   receiverId,
+    //   text: newMessage,
+    // });
 
     try {
       if (newMessage !== "") {
@@ -117,7 +117,7 @@ const UserInbox = () => {
           .post(`${server}/message/create-new-message`, message)
           .then((res) => {
             setMessages([...messages, res.data.message]);
-            updateLastMessage();
+            // updateLastMessage();
           })
           .catch((error) => {
             console.log(error);
@@ -128,24 +128,24 @@ const UserInbox = () => {
     }
   };
 
-  const updateLastMessage = async () => {
-    socketId.emit("updateLastMessage", {
-      lastMessage: newMessage,
-      lastMessageId: user._id,
-    });
+  // const updateLastMessage = async () => {
+  //   socketId.emit("updateLastMessage", {
+  //     lastMessage: newMessage,
+  //     lastMessageId: user._id,
+  //   });
 
-    await axios
-      .put(`${server}/conversation/update-last-message/${currentChat._id}`, {
-        lastMessage: newMessage,
-        lastMessageId: user._id,
-      })
-      .then((res) => {
-        setNewMessage("");
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  };
+  //   await axios
+  //     .put(`${server}/conversation/update-last-message/${currentChat._id}`, {
+  //       lastMessage: newMessage,
+  //       lastMessageId: user._id,
+  //     })
+  //     .then((res) => {
+  //       setNewMessage("");
+  //     })
+  //     .catch((error) => {
+  //       console.log(error);
+  //     });
+  // };
 
   const handleImageUpload = async (e) => {
     const reader = new FileReader();
@@ -166,11 +166,11 @@ const UserInbox = () => {
       (member) => member !== user._id
     );
 
-    socketId.emit("sendMessage", {
-      senderId: user._id,
-      receiverId,
-      images: e,
-    });
+    // socketId.emit("sendMessage", {
+    //   senderId: user._id,
+    //   receiverId,
+    //   images: e,
+    // });
 
     try {
       await axios
@@ -393,7 +393,7 @@ const SellerInbox = ({
                   </div>
 
                   <p className="text-[12px] text-[#000000d3] pt-1">
-                    {format(item.createdAt)}
+                    {/* {format(item.createdAt)} */}
                   </p>
                 </div>
               )}
