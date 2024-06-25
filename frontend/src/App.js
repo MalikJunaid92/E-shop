@@ -64,16 +64,16 @@ import { loadStripe } from "@stripe/stripe-js";
 const App = () => {
   const [stripeApikey, setStripeApiKey] = useState("");
 
-  // async function getStripeApikey() {
-  //   const { data } = await axios.get(`${server}/payment/stripeapikey`);
-  //   setStripeApiKey(data.stripeApikey);
-  // }
+  async function getStripeApikey() {
+    const { data } = await axios.get(`${server}/payment/stripeapikey`);
+    setStripeApiKey(data.stripeApikey);
+  }
   useEffect(() => {
     Store.dispatch(loadUser());
     Store.dispatch(loadSeller());
     Store.dispatch(getAllProducts());
     Store.dispatch(getAllEvents());
-    // getStripeApikey();
+    getStripeApikey();
   }, []);
 
   return (

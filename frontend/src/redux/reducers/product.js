@@ -2,6 +2,8 @@ import { createReducer } from "@reduxjs/toolkit";
 
 const initialState = {
   isLoading: true,
+  allProducts: [], // Initial state for allProducts
+  error: null,
 };
 
 export const productReducer = createReducer(initialState, {
@@ -57,7 +59,6 @@ export const productReducer = createReducer(initialState, {
     state.isLoading = false;
     state.error = action.payload;
   },
-  
   clearErrors: (state) => {
     state.error = null;
   },

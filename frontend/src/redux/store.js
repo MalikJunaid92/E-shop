@@ -1,3 +1,4 @@
+// store.js
 import { configureStore } from "@reduxjs/toolkit";
 import { userReducer } from "./reducers/user";
 import { sellerReducer } from "./reducers/seller";
@@ -7,8 +8,7 @@ import { cartReducer } from "./reducers/cart";
 import { wishlistReducer } from "./reducers/wishlist";
 import { orderReducer } from "./reducers/order";
 
-
-const Store = configureStore({
+const store = configureStore({
   reducer: {
     user: userReducer,
     seller: sellerReducer,
@@ -20,4 +20,4 @@ const Store = configureStore({
   },
 });
 
-export default Store;
+export default store;

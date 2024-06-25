@@ -95,16 +95,12 @@ export const deleteProduct = (id) => async (dispatch) => {
 // get all products
 export const getAllProducts = () => async (dispatch) => {
   try {
-    dispatch({
-      type: "getAllProductsRequest",
-    });
-
+    dispatch({ type: "getAllProductsRequest" });
     const { data } = await axios.get(`${server}/product/get-all-products`);
-    dispatch({
-      type: "getAllProductsSuccess",
-      payload: data.products,
-    });
+    console.log("Data fetched from server:", data); // Debugging log
+    dispatch({ type: "getAllProductsSuccess", payload: data.products });
   } catch (error) {
+    console.error("Error fetching products:", error.response.data.message); // Debugging log
     dispatch({
       type: "getAllProductsFailed",
       payload: error.response.data.message,
