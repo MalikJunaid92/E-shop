@@ -9,6 +9,7 @@ const product = require("./controller/product");
 const event = require("./controller/event");
 const coupon = require("./controller/coupounCode");
 const payment = require("./controller/payment");
+const order = require("./controller/order");
 const cors = require("cors");
 
 app.use(express.json());
@@ -36,6 +37,7 @@ app.use("/api/v2/product", product);
 app.use("/api/v2/event", event);
 app.use("/api/v2/coupon", coupon);
 app.use("/api/v2/payment", payment);
+app.use("/api/v2/order", order);
 
 
 // its for Error Handler
