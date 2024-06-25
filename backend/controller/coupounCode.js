@@ -81,3 +81,5 @@ router.get("/get-coupon-value/:name", catchAsyncErrors(async(req,res,next)=>{
         
     }
 }))
+
+module.exports= router;
