@@ -7,10 +7,10 @@ import { useNavigate } from "react-router-dom";
 import { AiOutlineArrowRight, AiOutlineSend } from "react-icons/ai";
 import styles from "../../styles/styles";
 import { TfiGallery } from "react-icons/tfi";
-// import socketIO from "socket.io-client";
-// import { format } from "timeago.js";
-// const ENDPOINT = "https://socket-ecommerce-tu68.onrender.com/";
-// const socketId = socketIO(ENDPOINT, { transports: ["websocket"] });
+import socketIO from "socket.io-client";
+import { format } from "timeago.js";
+const ENDPOINT = "http://localhost:4000/";
+const socketId = socketIO(ENDPOINT, { transports: ["websocket"] });
 
 const DashboardMessages = () => {
   const { seller,isLoading } = useSelector((state) => state.seller);
@@ -26,15 +26,15 @@ const DashboardMessages = () => {
   const [open, setOpen] = useState(false);
   const scrollRef = useRef(null);
 
-  // useEffect(() => {
-  //   socketId.on("getMessage", (data) => {
-  //     setArrivalMessage({
-  //       sender: data.senderId,
-  //       text: data.text,
-  //       createdAt: Date.now(),
-  //     });
-  //   });
-  // }, []);
+  useEffect(() => {
+    socketId.on("getMessage", (data) => {
+      setArrivalMessage({
+        sender: data.senderId,
+        text: data.text,
+        createdAt: Date.now(),
+      });
+    });
+  }, []);
 
   useEffect(() => {
     arrivalMessage &&
@@ -60,15 +60,15 @@ const DashboardMessages = () => {
     getConversation();
   }, [seller, messages]);
 
-  // useEffect(() => {
-  //   if (seller) {
-  //     const sellerId = seller?._id;
-  //     socketId.emit("addUser", sellerId);
-  //     socketId.on("getUsers", (data) => {
-  //       setOnlineUsers(data);
-  //     });
-  //   }
-  // }, [seller]);
+  useEffect(() => {
+    if (seller) {
+      const sellerId = seller?._id;
+      socketId.emit("addUser", sellerId);
+      socketId.on("getUsers", (data) => {
+        setOnlineUsers(data);
+      });
+    }
+  }, [seller]);
 
   const onlineCheck = (chat) => {
     const chatMembers = chat.members.find((member) => member !== seller?._id);
@@ -106,11 +106,11 @@ const DashboardMessages = () => {
       (member) => member.id !== seller._id
     );
 
-    // socketId.emit("sendMessage", {
-    //   senderId: seller._id,
-    //   receiverId,
-    //   text: newMessage,
-    // });
+    socketId.emit("sendMessage", {
+      senderId: seller._id,
+      receiverId,
+      text: newMessage,
+    });
 
     try {
       if (newMessage !== "") {
@@ -136,41 +136,41 @@ const DashboardMessages = () => {
     reader.onload = () => {
       if (reader.readyState === 2) {
         setImages(reader.result);
-        // imageSendingHandler(reader.result);
+        imageSendingHandler(reader.result);
       }
     };
 
     reader.readAsDataURL(e.target.files[0]);
   };
 
-  // const imageSendingHandler = async (e) => {
-  //   const receiverId = currentChat.members.find(
-  //     (member) => member !== seller._id
-  //   );
+  const imageSendingHandler = async (e) => {
+    const receiverId = currentChat.members.find(
+      (member) => member !== seller._id
+    );
 
-  //   socketId.emit("sendMessage", {
-  //     senderId: seller._id,
-  //     receiverId,
-  //     images: e,
-  //   });
+    socketId.emit("sendMessage", {
+      senderId: seller._id,
+      receiverId,
+      images: e,
+    });
 
-  //   try {
-  //     await axios
-  //       .post(`${server}/message/create-new-message`, {
-  //         images: e,
-  //         sender: seller._id,
-  //         text: newMessage,
-  //         conversationId: currentChat._id,
-  //       })
-  //       .then((res) => {
-  //         setImages();
-  //         setMessages([...messages, res.data.message]);
-  //         updateLastMessageForImage();
-  //       });
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
+    try {
+      await axios
+        .post(`${server}/message/create-new-message`, {
+          images: e,
+          sender: seller._id,
+          text: newMessage,
+          conversationId: currentChat._id,
+        })
+        .then((res) => {
+          setImages();
+          setMessages([...messages, res.data.message]);
+          updateLastMessageForImage();
+        });
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const updateLastMessageForImage = async () => {
     await axios.put(
