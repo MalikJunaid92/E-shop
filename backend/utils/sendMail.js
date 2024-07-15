@@ -1,24 +1,34 @@
 const nodemailer = require("nodemailer");
+const ErrorHandler = require("./ErrorHandler");
 
-const sendMail = async (options) => {
+const sendEmail = async (options) => {
+  try {
     const transporter = nodemailer.createTransport({
-        host: process.env.SMPT_HOST,
-        port: process.env.SMPT_PORT,
-        service: process.env.SMPT_SERVICE,
-        auth:{
-            user: process.env.SMPT_MAIL,
-            pass: process.env.SMPT_PASSWORD,
-        },
+      service: process.env.SMTP_SERVICE,
+      auth: {
+        user: process.env.SMTP_MAIL,
+        pass: process.env.SMTP_PASSWORD,
+      },
     });
 
+    await transporter.verify(); // Verify connection configuration
+
     const mailOptions = {
-        from: process.env.SMPT_MAIL,
-        to: options.email,
-        subject: options.subject,
-        text: options.message,
+      from: process.env.SMTP_MAIL,
+      to: options.email,
+      subject: options.subject,
+      text: options.emailMessage,
     };
 
-    await transporter.sendMail(mailOptions);
+    const info = await transporter.sendMail(mailOptions); // Send mail
+
+    console.log("Message sent: %s", info.messageId);
+
+    return info;
+  } catch (error) {
+    console.error("Error sending email:", error);
+    throw new ErrorHandler(500, error.message);
+  }
 };
 
-module.exports = sendMail;
+module.exports = sendEmail;

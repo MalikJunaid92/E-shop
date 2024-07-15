@@ -12,12 +12,12 @@ const Signup = () => {
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [visible, setVisible] = useState(false);
-  const [avatar, setAvatar] = useState(null);
+  const [avatar, setAvatar] = useState(null); // Use null instead of empty string
 
   const handleFileInputChange = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files[0]; // Get the first file from the input element
     if (file) {
-      setAvatar(file);
+      setAvatar(file); // Set the file object directly
     }
   };
 
@@ -28,20 +28,19 @@ const Signup = () => {
     formData.append("name", name);
     formData.append("email", email);
     formData.append("password", password);
-    if (avatar) {
       formData.append("avatar", avatar);
-    }
 
     axios
-      .post(`${server}/user/create-user`, formData, {
+      .post(`${server}/user/create-user`, {name,email,password,avatar}, {
         headers: { "Content-Type": "multipart/form-data" },
+        withCredentials:true
       })
       .then((res) => {
         toast.success(res.data.message);
         setName("");
         setEmail("");
         setPassword("");
-        setAvatar(null);
+        setAvatar(null); // Reset avatar state after successful submission
       })
       .catch((error) => {
         toast.error(error.response.data.message);
@@ -124,11 +123,17 @@ const Signup = () => {
             </div>
 
             <div>
-              <label htmlFor="avatar" className="block text-sm font-medium text-gray-700"></label>
+              <label htmlFor="avatar" className="block text-sm font-medium text-gray-700">
+                Avatar
+              </label>
               <div className="mt-2 flex items-center">
                 <span className="inline-block h-8 w-8 rounded-full overflow-hidden">
                   {avatar ? (
-                    <img src={URL.createObjectURL(avatar)} alt="avatar" className="h-full w-full object-cover rounded-full" />
+                    <img
+                      src={URL.createObjectURL(avatar)}
+                      alt="avatar"
+                      className="h-full w-full object-cover rounded-full"
+                    />
                   ) : (
                     <RxAvatar className="h-8 w-8" />
                   )}
