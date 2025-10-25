@@ -17,10 +17,11 @@ const sendEmail = async (options) => {
       from: process.env.SMTP_MAIL,
       to: options.email,
       subject: options.subject,
-      text: options.emailMessage,
+      text: options.message,
     };
 
     const info = await transporter.sendMail(mailOptions); // Send mail
+    console.log("sendEmail called with:", mailOptions);
 
     console.log("Message sent: %s", info.messageId);
 

@@ -1,64 +1,78 @@
 const express = require("express");
 const User = require("../model/user");
-const router = express.Router();
-const cloudinary = require("cloudinary");
 const ErrorHandler = require("../utils/ErrorHandler");
-const catchAsyncErrors = require("../middleware/catchAsyncErrors");
-const jwt = require("jsonwebtoken");
 const sendMail = require("../utils/sendMail");
-const sendToken = require("../utils/jwtToken");
+const jwt = require("jsonwebtoken");
+const upload = require("../middleware/upload"); // ✅ multer-cloudinary setup
+const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 const { isAuthenticated, isAdmin } = require("../middleware/auth");
+const { sendToken } = require("../utils/jwtToken");
+
+const router = express.Router();
 
 // create user
-router.post("/create-user", async (req, res, next) => {
-  try {
-    const { name, email, password, avatar } = req.body;
-    const userEmail = await User.findOne({ email });
-
-    if (userEmail) {
-      return next(new ErrorHandler("User already exists", 400));
-    }
-    console.log(req.body)
-
-    const myCloud = await cloudinary.v2.uploader.upload(avatar, {
-      folder: "avatars",
-    });
-    const user = {
-      name: name,
-      email: email,
-      password: password,
-      avatar: {
-        public_id: myCloud.public_id,
-        url: myCloud.secure_url,
-      },
-    };
-
-    const activationToken = createActivationToken(user);
-
-    const activationUrl = `https://eshop-tutorial-pyri.vercel.app/activation/${activationToken}`;
-
+router.post(
+  "/create-user",
+  upload.single("avatar"), // this handles the Cloudinary upload
+  catchAsyncErrors(async (req, res, next) => {
     try {
+      const { name, email, password } = req.body;
+
+      // 1️⃣ Check if user already exists
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return next(new ErrorHandler("User already exists", 400));
+      }
+
+      // 2️⃣ Validate avatar upload
+      if (!req.file?.path) {
+        return res.status(400).json({
+          success: false,
+          message: "Please upload an avatar image!",
+        });
+      }
+
+      // 3️⃣ Use Cloudinary data from req.file
+      const user = {
+        name,
+        email,
+        password,
+        avatar: {
+          public_id: req.file.filename,
+          url: req.file.path,
+        },
+      };
+
+      // 4️⃣ Create activation token and send email
+      const activationToken = createActivationToken(user);
+      const activationUrl = `http://localhost:3000/activation/${encodeURIComponent(
+        activationToken
+      )}`;
       await sendMail({
         email: user.email,
         subject: "Activate your account",
         message: `Hello ${user.name}, please click on the link to activate your account: ${activationUrl}`,
       });
+
+      // 5️⃣ Response
       res.status(201).json({
         success: true,
-        message: `please check your email:- ${user.email} to activate your account!`,
+        message: `Please check your email (${user.email}) to activate your account.`,
       });
     } catch (error) {
       return next(new ErrorHandler(error.message, 500));
     }
-  } catch (error) {
-    return next(new ErrorHandler(error.message, 400));
-  }
-});
-
+  })
+);
 // create activation token
 const createActivationToken = (user) => {
+  if (!process.env.ACTIVATION_SECRET) {
+    throw new Error(
+      "ACTIVATION_SECRET is not defined. Set ACTIVATION_SECRET in backend/.env and restart the server."
+    );
+  }
   return jwt.sign(user, process.env.ACTIVATION_SECRET, {
-    expiresIn: "5m",
+    expiresIn: "1h",
   });
 };
 
@@ -67,32 +81,43 @@ router.post(
   "/activation",
   catchAsyncErrors(async (req, res, next) => {
     try {
-      const { activation_token } = req.body;
-
-      const newUser = jwt.verify(
-        activation_token,
-        process.env.ACTIVATION_SECRET
-      );
-
-      if (!newUser) {
-        return next(new ErrorHandler("Invalid token", 400));
+      // accept either field name to be robust
+      const token = req.body.activationToken || req.body.activation_token;
+      if (!token) {
+        return next(new ErrorHandler("Activation token missing", 400));
       }
+
+      let newUser;
+      try {
+        newUser = jwt.verify(token, process.env.ACTIVATION_SECRET);
+      } catch (err) {
+        // clearer error responses for JWT problems
+        if (err.name === "TokenExpiredError") {
+          return next(new ErrorHandler("Activation token expired", 400));
+        }
+        return next(new ErrorHandler("Invalid activation token", 400));
+      }
+
       const { name, email, password, avatar } = newUser;
 
+      // Check if user already exists
       let user = await User.findOne({ email });
-
       if (user) {
         return next(new ErrorHandler("User already exists", 400));
       }
+
+      // Create and save user
       user = await User.create({
         name,
         email,
-        avatar,
         password,
+        avatar,
       });
 
+      // Send token to log user in
       sendToken(user, 201, res);
     } catch (error) {
+      console.error("Activation Error:", error);
       return next(new ErrorHandler(error.message, 500));
     }
   })

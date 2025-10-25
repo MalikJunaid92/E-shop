@@ -12,12 +12,12 @@ const Signup = () => {
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [visible, setVisible] = useState(false);
-  const [avatar, setAvatar] = useState(null); // Use null instead of empty string
+  const [avatar, setAvatar] = useState(null);
 
   const handleFileInputChange = (e) => {
-    const file = e.target.files[0]; // Get the first file from the input element
+    const file = e.target.files[0];
     if (file) {
-      setAvatar(file); // Set the file object directly
+      setAvatar(file);
     }
   };
 
@@ -28,24 +28,23 @@ const Signup = () => {
     formData.append("name", name);
     formData.append("email", email);
     formData.append("password", password);
-      formData.append("avatar", avatar);
+    if (avatar) formData.append("avatar", avatar);
 
-    axios
-      .post(`${server}/user/create-user`, {name,email,password,avatar}, {
+    try {
+      const res = await axios.post(`${server}/user/create-user`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
-        withCredentials:true
-      })
-      .then((res) => {
-        toast.success(res.data.message);
-        setName("");
-        setEmail("");
-        setPassword("");
-        setAvatar(null); // Reset avatar state after successful submission
-      })
-      .catch((error) => {
-        toast.error(error.response.data.message);
-        console.log(error.response.data.message);
+        withCredentials: true,
       });
+
+      toast.success(res.data.message);
+      setName("");
+      setEmail("");
+      setPassword("");
+      setAvatar(null);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Something went wrong");
+      console.log(error.response?.data);
+    }
   };
 
   return (
@@ -59,7 +58,10 @@ const Signup = () => {
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="name"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Full Name
               </label>
               <div className="mt-1">
@@ -76,7 +78,10 @@ const Signup = () => {
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Email address
               </label>
               <div className="mt-1">
@@ -93,7 +98,10 @@ const Signup = () => {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Password
               </label>
               <div className="mt-1 relative">
@@ -123,7 +131,10 @@ const Signup = () => {
             </div>
 
             <div>
-              <label htmlFor="avatar" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="avatar"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Avatar
               </label>
               <div className="mt-2 flex items-center">

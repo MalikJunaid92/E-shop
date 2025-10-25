@@ -10,10 +10,10 @@ import { TfiGallery } from "react-icons/tfi";
 import socketIO from "socket.io-client";
 import { format } from "timeago.js";
 const ENDPOINT = "http://localhost:4000/";
-const socketId = socketIO(ENDPOINT, { transports: ["websocket"] });
+// const socket = socketIO(ENDPOINT, { transports: ["websocket"] });
 
 const DashboardMessages = () => {
-  const { seller,isLoading } = useSelector((state) => state.seller);
+  const { seller, isLoading } = useSelector((state) => state.seller);
   const [conversations, setConversations] = useState([]);
   const [arrivalMessage, setArrivalMessage] = useState(null);
   const [currentChat, setCurrentChat] = useState();
@@ -25,11 +25,19 @@ const DashboardMessages = () => {
   const [images, setImages] = useState();
   const [open, setOpen] = useState(false);
   const scrollRef = useRef(null);
+  const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    socketId.on("getMessage", (data) => {
+    const newSocket = socketIO(ENDPOINT, { transports: ["websocket"] });
+    setSocket(newSocket);
+
+    return () => newSocket.disconnect();
+  }, []);
+
+  useEffect(() => {
+    socket.on("getMessage", (data) => {
       setArrivalMessage({
-        sender: data.senderId,
+        sender: data.sender, // <-- use data.sender, not data.senderId
         text: data.text,
         createdAt: Date.now(),
       });
@@ -63,8 +71,8 @@ const DashboardMessages = () => {
   useEffect(() => {
     if (seller) {
       const sellerId = seller?._id;
-      socketId.emit("addUser", sellerId);
-      socketId.on("getUsers", (data) => {
+      socket.emit("addUser", sellerId);
+      socket.on("getUsers", (data) => {
         setOnlineUsers(data);
       });
     }
@@ -103,10 +111,10 @@ const DashboardMessages = () => {
     };
 
     const receiverId = currentChat.members.find(
-      (member) => member.id !== seller._id
+      (member) => member !== seller._id
     );
 
-    socketId.emit("sendMessage", {
+    socket.emit("sendMessage", {
       senderId: seller._id,
       receiverId,
       text: newMessage,
@@ -129,7 +137,6 @@ const DashboardMessages = () => {
     }
   };
 
- 
   const handleImageUpload = async (e) => {
     const reader = new FileReader();
 
@@ -148,7 +155,7 @@ const DashboardMessages = () => {
       (member) => member !== seller._id
     );
 
-    socketId.emit("sendMessage", {
+    socket.emit("sendMessage", {
       senderId: seller._id,
       receiverId,
       images: e,
@@ -177,13 +184,13 @@ const DashboardMessages = () => {
       `${server}/conversation/update-last-message/${currentChat._id}`,
       {
         lastMessage: "Photo",
-        lastMessageId: seller._id,
+        lastMessagesId: seller._id,
       }
     );
   };
 
   useEffect(() => {
-    scrollRef.current?.scrollIntoView({ beahaviour: "smooth" });
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   return (
@@ -241,7 +248,7 @@ const MessageList = ({
   setUserData,
   online,
   setActiveStatus,
-  isLoading
+  isLoading,
 }) => {
   console.log(data);
   const [user, setUser] = useState([]);

@@ -2,11 +2,11 @@ const mongoose = require("mongoose");
 
 const conversationSchema = new mongoose.Schema(
   {
-    groupTitle:{
-        type: String,
+    groupTitle: {
+      type: String,
     },
     members: {
-      type: Array,
+      type: [String],
     },
     lastMessage: {
       type: String,

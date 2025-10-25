@@ -25,23 +25,24 @@ router.post(
         } else {
           images = req.body.images;
         }
-      
+
         const imagesLinks = [];
-      
+
         for (let i = 0; i < images.length; i++) {
           const result = await cloudinary.v2.uploader.upload(images[i], {
-            folder: "products",
+            folder: "shops/avatars",
           });
-      
+
           imagesLinks.push({
             public_id: result.public_id,
             url: result.secure_url,
           });
         }
-      
+
         const productData = req.body;
+        // store the shop id (not entire shop doc)
         productData.images = imagesLinks;
-        productData.shop = shop;
+        productData.shop = shop._id;
 
         const product = await Product.create(productData);
 
@@ -61,9 +62,10 @@ router.get(
   "/get-all-products-shop/:id",
   catchAsyncErrors(async (req, res, next) => {
     try {
-      const products = await Product.find({ shopId: req.params.id });
+      // query by shop field
+      const products = await Product.find({ shop: req.params.id });
 
-      res.status(201).json({
+      res.status(200).json({
         success: true,
         products,
       });
@@ -83,17 +85,18 @@ router.delete(
 
       if (!product) {
         return next(new ErrorHandler("Product is not found with this id", 404));
-      }    
+      }
 
-      for (let i = 0; 1 < product.images.length; i++) {
+      // fixed loop condition (was `1 < product.images.length` causing infinite loop)
+      for (let i = 0; i < product.images.length; i++) {
         const result = await cloudinary.v2.uploader.destroy(
           product.images[i].public_id
         );
       }
-    
+
       await product.remove();
 
-      res.status(201).json({
+      res.status(200).json({
         success: true,
         message: "Product Deleted successfully!",
       });
@@ -129,6 +132,9 @@ router.put(
       const { user, rating, comment, productId, orderId } = req.body;
 
       const product = await Product.findById(productId);
+      if (!product) {
+        return next(new ErrorHandler("Product not found", 404));
+      }
 
       const review = {
         user,
@@ -137,14 +143,17 @@ router.put(
         productId,
       };
 
+      // compare ids safely (ObjectId -> string)
       const isReviewed = product.reviews.find(
-        (rev) => rev.user._id === req.user._id
+        (rev) => rev.user && rev.user.toString() === req.user._id.toString()
       );
 
       if (isReviewed) {
         product.reviews.forEach((rev) => {
-          if (rev.user._id === req.user._id) {
-            (rev.rating = rating), (rev.comment = comment), (rev.user = user);
+          if (rev.user && rev.user.toString() === req.user._id.toString()) {
+            rev.rating = rating;
+            rev.comment = comment;
+            rev.user = user;
           }
         });
       } else {
@@ -161,15 +170,17 @@ router.put(
 
       await product.save({ validateBeforeSave: false });
 
-      await Order.findByIdAndUpdate(
-        orderId,
-        { $set: { "cart.$[elem].isReviewed": true } },
-        { arrayFilters: [{ "elem._id": productId }], new: true }
-      );
+      if (orderId) {
+        await Order.findByIdAndUpdate(
+          orderId,
+          { $set: { "cart.$[elem].isReviewed": true } },
+          { arrayFilters: [{ "elem._id": productId }], new: true }
+        );
+      }
 
       res.status(200).json({
         success: true,
-        message: "Reviwed succesfully!",
+        message: "Reviewed successfully!",
       });
     } catch (error) {
       return next(new ErrorHandler(error, 400));
@@ -187,7 +198,7 @@ router.get(
       const products = await Product.find().sort({
         createdAt: -1,
       });
-      res.status(201).json({
+      res.status(200).json({
         success: true,
         products,
       });
@@ -196,4 +207,5 @@ router.get(
     }
   })
 );
+
 module.exports = router;

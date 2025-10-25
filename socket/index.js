@@ -18,6 +18,7 @@ app.get("/", (req, res) => {
 });
 
 let users = [];
+let messages = {}; // <-- Move this here, outside io.on("connection")
 
 const addUser = (userId, socketId) => {
   !users.some((user) => user.userId === userId) &&
@@ -34,11 +35,12 @@ const getUser = (receiverId) => {
 
 // Define a message object with a seen property
 const createMessage = ({ senderId, receiverId, text, images }) => ({
-  senderId,
+  sender: senderId, // <-- use sender
   receiverId,
   text,
   images,
   seen: false,
+  createdAt: Date.now(), // add timestamp for frontend
 });
 
 io.on("connection", (socket) => {
@@ -52,8 +54,6 @@ io.on("connection", (socket) => {
   });
 
   // send and get message
-  const messages = {}; // Object to track messages sent to each user
-
   socket.on("sendMessage", ({ senderId, receiverId, text, images }) => {
     const message = createMessage({ senderId, receiverId, text, images });
 

@@ -20,12 +20,22 @@ const Login = () => {
         { email, password },
         { withCredentials: true }
       );
+
+      // store token and set default Authorization header for subsequent requests
+      const token = res.data?.token;
+      if (token) {
+        localStorage.setItem("token", token);
+        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      }
+
       toast.success("Login Success!");
       navigate("/");
       window.location.reload(true);
     } catch (err) {
-      console.error("Login error: ", err); // Log the error for debugging
-      toast.error(err.response?.data?.message || "An error occurred during login.");
+      console.error("Login error: ", err);
+      toast.error(
+        err.response?.data?.message || "An error occurred during login."
+      );
     }
   };
 
@@ -40,7 +50,10 @@ const Login = () => {
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Email address
               </label>
               <div className="mt-1">
@@ -56,7 +69,10 @@ const Login = () => {
               </div>
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Password
               </label>
               <div className="mt-1 relative">
@@ -92,12 +108,18 @@ const Login = () => {
                   id="remember-me"
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                <label
+                  htmlFor="remember-me"
+                  className="ml-2 block text-sm text-gray-900"
+                >
                   Remember me
                 </label>
               </div>
               <div className="text-sm">
-                <a href=".forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
+                <a
+                  href=".forgot-password"
+                  className="font-medium text-blue-600 hover:text-blue-500"
+                >
                   Forgot your password?
                 </a>
               </div>
