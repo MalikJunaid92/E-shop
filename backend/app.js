@@ -7,7 +7,7 @@ const cors = require("cors");
 
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: "https://e-shop-smoky-zeta.vercel.app/",
     credentials: true,
   })
 );
