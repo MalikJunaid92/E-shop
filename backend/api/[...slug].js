@@ -5,18 +5,28 @@
 const app = require("../index");
 const connectDatabase = require("../db/Database");
 
-// Try to connect to the database when the function instance initializes.
-// For serverless warm instances this will reuse the open connection.
+// Kick off a DB connection promise (if DB_URL is configured). The promise
+// will be reused across warm function instances. The handler awaits the
+// connection before delegating to the Express app so route handlers can
+// safely use Mongoose.
+let dbPromise = null;
 if (process.env.DB_URL) {
-  try {
-    connectDatabase();
-  } catch (err) {
-    console.error("DB connect error:", err);
-  }
+  dbPromise = connectDatabase();
 } else {
   console.warn(
     "DB_URL not set; database connection skipped in serverless function."
   );
 }
 
-module.exports = (req, res) => app(req, res);
+module.exports = async (req, res) => {
+  try {
+    if (dbPromise) await dbPromise;
+  } catch (err) {
+    console.error("DB connection failed before handling request:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Database connection error" });
+  }
+
+  return app(req, res);
+};
