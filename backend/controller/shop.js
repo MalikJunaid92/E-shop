@@ -119,15 +119,15 @@ router.post(
   })
 );
 
-// load shop
+// load shop (returns the currently authenticated seller)
 router.get("/getSeller", isSeller, async (req, res, next) => {
-  if (!req.user) {
+  if (!req.seller) {
     return next(new ErrorHandler("Seller not found", 404));
   }
 
   res.status(200).json({
     success: true,
-    seller: req.user,
+    seller: req.seller,
   });
 });
 

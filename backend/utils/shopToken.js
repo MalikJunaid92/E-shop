@@ -16,11 +16,12 @@ const sendShopToken = (user, statusCode, res) => {
     expiresIn: process.env.JWT_EXPIRES || "7d",
   });
 
+  const isProd = process.env.NODE_ENV === "production";
   const cookieOptions = {
     expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     httpOnly: true,
-    secure: false,
-    sameSite: "lax",
+    secure: isProd,
+    sameSite: "none",
     path: "/",
   };
 

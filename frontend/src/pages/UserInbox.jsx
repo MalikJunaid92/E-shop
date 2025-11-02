@@ -10,7 +10,7 @@ import { AiOutlineArrowRight, AiOutlineSend } from "react-icons/ai";
 import { TfiGallery } from "react-icons/tfi";
 import styles from "../styles/styles";
 
-const ENDPOINT = "http://localhost:4000";
+const ENDPOINT = "https://socket-server-89h0.onrender.com/";
 
 const UserInbox = () => {
   const { user, loading } = useSelector((state) => state.user);
@@ -72,7 +72,7 @@ const UserInbox = () => {
       }
     };
     getConversation();
-  }, [user, messages]);
+  }, [user]);
 
   // Add user to online list
   useEffect(() => {
@@ -88,11 +88,12 @@ const UserInbox = () => {
 
   // Fetch messages for current chat
   useEffect(() => {
-    if (!currentChat) return;
+    if (!currentChat?._id) return;
     const getMessages = async () => {
       try {
         const res = await axios.get(
-          `${server}/message/get-all-messages/${currentChat._id}`
+          `${server}/message/get-all-messages/${currentChat._id}`,
+          { withCredentials: true }
         );
         setMessages(res.data.messages || []);
       } catch (err) {
@@ -105,6 +106,10 @@ const UserInbox = () => {
   // Send message
   const sendMessageHandler = async (e) => {
     e.preventDefault();
+    if (!currentChat || !currentChat._id) {
+      console.log("No conversation selected. Cannot send message.");
+      return;
+    }
     if (!newMessage.trim() && !images) return;
 
     const message = {
@@ -115,19 +120,22 @@ const UserInbox = () => {
     };
     const receiverId = currentChat.members.find((m) => m !== user._id);
 
-    socket.emit("sendMessage", {
-      senderId: user._id,
-      receiverId,
-      text: newMessage,
-      images,
-    });
+    if (socket && receiverId) {
+      socket.emit("sendMessage", {
+        senderId: user._id,
+        receiverId,
+        text: newMessage,
+        images,
+      });
+    }
 
     try {
       const res = await axios.post(
         `${server}/message/create-new-message`,
-        message
+        message,
+        { withCredentials: true }
       );
-      setMessages([...messages, res.data.message]);
+      setMessages((prev) => [...prev, res.data.message]);
       updateLastMessage(newMessage, images ? "Photo" : newMessage);
       setNewMessage("");
       setImages(null);
@@ -148,7 +156,8 @@ const UserInbox = () => {
         {
           lastMessage: displayMsg,
           lastMessageId: user._id,
-        }
+        },
+        { withCredentials: true }
       );
     } catch (err) {
       console.log(err);
@@ -242,8 +251,11 @@ const MessageList = ({
     setActiveStatus(online);
     const userId = data.members.find((id) => id !== me);
     const getUser = async () => {
+      if (!userId) return;
       try {
-        const res = await axios.get(`${server}/shop/get-shop-info/${userId}`);
+        const res = await axios.get(`${server}/shop/get-shop-info/${userId}`, {
+          withCredentials: true,
+        });
         setUser(res.data.shop);
       } catch (err) {
         console.log(err);
@@ -253,11 +265,33 @@ const MessageList = ({
   }, [me, data]);
 
   const handleClick = () => {
-    setActive(index);
-    setCurrentChat(data);
-    setUserData(user);
-    setActiveStatus(online);
-    navigate(`/inbox?${data._id}`);
+    // ensure userData is fetched before opening the chat
+    (async () => {
+      try {
+        setActive(index);
+        setCurrentChat(data);
+        setActiveStatus(online);
+        const userId = data.members.find((id) => id !== me);
+        if (userId) {
+          const res = await axios.get(
+            `${server}/shop/get-shop-info/${userId}`,
+            {
+              withCredentials: true,
+            }
+          );
+          setUser(res.data.shop);
+          setUserData(res.data.shop);
+        } else {
+          setUser(null);
+          setUserData(null);
+        }
+      } catch (err) {
+        console.log("Failed to fetch chat user:", err);
+      } finally {
+        setOpen(true);
+        navigate(`/inbox?${data._id}`);
+      }
+    })();
   };
 
   return (

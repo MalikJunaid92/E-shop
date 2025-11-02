@@ -5,9 +5,28 @@ const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 
+// During debugging we want to restrict the backend to accept requests only
+// from the local frontend (http://localhost:3000). To avoid accidentally
+// allowing the deployed frontend while we're diagnosing auth/CORS issues,
+// we force the default allowed origin to localhost. You can still override
+// this using ALLOWED_ORIGINS env var if needed.
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",").map((s) => s.trim())
+  : ["http://localhost:3000"];
+
+console.log("CORS allowed origins:", allowedOrigins);
+
 app.use(
   cors({
-    origin: "https://e-shop-smoky-zeta.vercel.app/",
+    origin: function (origin, callback) {
+      // allow requests with no origin (mobile apps, curl, same-origin)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        return callback(null, true);
+      }
+      console.error("Blocked CORS request from origin:", origin);
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   })
 );

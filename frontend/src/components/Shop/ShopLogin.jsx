@@ -26,6 +26,16 @@ const ShopLogin = () => {
       )
       .then((res) => {
         toast.success("Login Success!");
+        // store token from response (fallback for browsers that reject cross-site cookies)
+        try {
+          const token = res.data.token;
+          if (token) {
+            localStorage.setItem("seller_token", token);
+            axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+          }
+        } catch (err) {
+          // ignore
+        }
         navigate("/dashboard");
       })
       .catch((err) => {

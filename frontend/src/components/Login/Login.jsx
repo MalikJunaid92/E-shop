@@ -30,7 +30,7 @@ const Login = () => {
 
       toast.success("Login Success!");
       navigate("/");
-      window.location.reload(true);
+      // window.location.reload(true);
     } catch (err) {
       console.error("Login error: ", err);
       toast.error(
