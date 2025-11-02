@@ -21,9 +21,25 @@ app.use(
     origin: function (origin, callback) {
       // allow requests with no origin (mobile apps, curl, same-origin)
       if (!origin) return callback(null, true);
+
+      // Exact match against configured allowed origins
       if (allowedOrigins.indexOf(origin) !== -1) {
+        // console.debug for allowed origin
+        console.log("CORS: allowing origin (exact match):", origin);
         return callback(null, true);
       }
+
+      // Optional: allow any Vercel frontend subdomain when ALLOW_VERCEL env var is set
+      // This helps during debugging when your frontend is deployed on Vercel and
+      // you want to call a local backend without listing every deployment URL.
+      if (
+        process.env.ALLOW_VERCEL === "true" &&
+        origin.endsWith(".vercel.app")
+      ) {
+        console.log("CORS: allowing origin (vercel wildcard):", origin);
+        return callback(null, true);
+      }
+
       console.error("Blocked CORS request from origin:", origin);
       return callback(new Error("Not allowed by CORS"));
     },
