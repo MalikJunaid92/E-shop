@@ -5,6 +5,9 @@ const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 
+// expose a lightweight health endpoint for quick production checks
+// GET /api/v2/health -> { success, dbConnected, dbState, env }
+
 // During debugging we want to restrict the backend to accept requests only
 // from the local frontend (http://localhost:3000). To avoid accidentally
 // allowing the deployed frontend while we're diagnosing auth/CORS issues,
@@ -55,6 +58,26 @@ app.use(
 app.use(cookieParser());
 app.get("/", (req, res) => {
   res.send("✅ Backend running successfully on Vercel!");
+});
+
+// Health endpoint for quick checks (DB + env presence)
+app.get("/api/v2/health", (req, res) => {
+  try {
+    const mongoose = require("mongoose");
+    const dbState = mongoose.connection.readyState; // 0 = disconnected, 1 = connected
+    return res.status(200).json({
+      success: true,
+      dbConnected: dbState === 1,
+      dbState,
+      env: {
+        hasDB_URL: !!process.env.DB_URL,
+        hasCLOUDINARY: !!process.env.CLOUDINARY_NAME,
+        hasACTIVATION_SECRET: !!process.env.ACTIVATION_SECRET,
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
