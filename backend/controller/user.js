@@ -60,6 +60,8 @@ router.post(
         message: `Please check your email (${user.email}) to activate your account.`,
       });
     } catch (error) {
+      // Log full error to aid debugging in production (Vercel function logs)
+      console.error("create-user error:", error);
       return next(new ErrorHandler(error.message, 500));
     }
   })
