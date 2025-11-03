@@ -24,23 +24,31 @@ router.post(
         return next(new ErrorHandler("User already exists", 400));
       }
 
-      // 2️⃣ Validate avatar upload
-      if (!req.file?.path) {
-        return res.status(400).json({
-          success: false,
-          message: "Please upload an avatar image!",
-        });
+      // 2️⃣ Validate avatar upload — in serverless/production the upload
+      // middleware or Cloudinary may occasionally fail. Fall back to a
+      // safe default avatar so user creation can proceed and we can debug
+      // the upload issue from logs.
+      let avatarObj = { public_id: "", url: "" };
+      if (req.file?.path) {
+        avatarObj = {
+          public_id: req.file.filename,
+          url: req.file.path,
+        };
+      } else {
+        console.warn(
+          "create-user: no avatar uploaded, using default placeholder"
+        );
+        // If you have a default avatar hosted (Cloudinary or elsewhere), set
+        // DEFAULT_AVATAR_URL in env and it will be used here.
+        avatarObj.url = process.env.DEFAULT_AVATAR_URL || "";
       }
 
-      // 3️⃣ Use Cloudinary data from req.file
+      // 3️⃣ Build user object
       const user = {
         name,
         email,
         password,
-        avatar: {
-          public_id: req.file.filename,
-          url: req.file.path,
-        },
+        avatar: avatarObj,
       };
 
       // 4️⃣ Create activation token and send email
